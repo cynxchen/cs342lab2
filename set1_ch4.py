@@ -13,7 +13,14 @@ def detect_single_xor(filename):
         for line in file:
             if line.endswith(b'\n'):
                 line = line[:-1]
-            best.append(set1_ch3.single_byte_xor_cipher_score(line))
-    return max(best, key = lambda x: x[2])
+            # Append best decrypted message for each line
+            best.append(set1_ch3.single_byte_xor_cipher_info(line))
+    # Return best of the best decrypted messages
+    return max(best, key = lambda x: x[2])[0]
 
-print(detect_single_xor('set1_ch4_data.txt'))
+def main():
+    detected = detect_single_xor('set1_ch4_data.txt')
+    print(detected)
+
+if __name__ == "__main__":
+    main()

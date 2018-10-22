@@ -14,11 +14,18 @@ import numpy as np
 
 def detect_AES(filename):
     unique = []
+    content = []
     with open(filename, "rb") as file:
         for line in file:
+            content.append(line)
             chunked = list(set1_ch6.chunks(line, 16))
-            unique.append(len(Counter(chunked)))
-    AES_encryped = np.argmin(unique)
-    return np.argmin(unique)
+            unique.append(len(Counter(chunked))) # number of unique chunks
+    AES_encrypted = np.argmin(unique)
+    return AES_encrypted, content[AES_encrypted]
 
-print(detect_AES("set1_ch8_data.txt"))
+def main():
+    index, ciphertext = detect_AES("set1_ch8_data.txt")
+    print(index, ciphertext)
+
+if __name__ == "__main__":
+    main()

@@ -17,13 +17,18 @@
 # Encrypt a bunch of stuff using your repeating-key XOR function. Encrypt your mail.
 # Encrypt your password file. Your .sig file. Get a feel for it. I promise, we aren't wasting your time with this.
 
-import binascii
 import codecs
+import set1_ch2
 
-def fixed_xor(key, message):
+def repeat_xor(key, message):
     key_repeat = key * -(-len(message)//3)
-    xor = bytes(a^b for a,b in zip(message,key_repeat))
+    xor = set1_ch2.xor(message,key_repeat)
     return codecs.encode(xor, 'hex')
 
-message =  b"Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal"
-print(fixed_xor(b'ICE', message))
+def main():
+    message =  b"Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal"
+    encrypted = repeat_xor(b'ICE', message)
+    print(encrypted)
+
+if __name__ == "__main__":
+    main()

@@ -17,11 +17,10 @@ def hex_to_base64(hex):
     encode = codecs.encode(decode, 'base64')
     return encode
 
-def base64_to_hex(base64):
-    decode = codecs.decode(base64, 'base64')
-    encode = codecs.encode(decode, 'hex')
-    return encode
+def main():
+    hex = b'49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d'
+    base = hex_to_base64(hex)
+    print(base)
 
-s = b'49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d'
-h = hex_to_base64(s)
-base64_to_hex(h)
+if __name__ == "__main__":
+    main()

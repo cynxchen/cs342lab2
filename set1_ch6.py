@@ -5,7 +5,15 @@
 # Here's how:
 #
 # Let KEYSIZE be the guessed length of the key; try values from 2 to (say) 40.
-#
+
+import codecs
+import numpy as np
+import os
+import itertools
+import set1_ch3
+import set1_ch5
+
+# ----------------------------------------------------------------------------------
 # Write a function to compute the edit distance/Hamming distance between two strings.
 # The Hamming distance is just the number of differing bits. The distance between:
 # this is a test
@@ -13,122 +21,101 @@
 # wokka wokka!!!
 # is 37. Make sure your code agrees before you proceed.
 
-import binascii
-import codecs
-import numpy as np
-
-
+# Convert bytes to binary
 def byte_to_bin(byte_str):
     return bin(int.from_bytes(byte_str, byteorder="big"))
 
+# Calculate hamming/edit distance
 def edit_distance(str1, str2):
     bin1 = byte_to_bin(str1)[2:]
     bin2 = byte_to_bin(str2)[2:]
     diff = [s1 != s2 for s1,s2 in zip(bin1, bin2)]
     return sum(diff)
 
-t1 = b'this is a test'
-t2 = b'wokka wokka!!!'
-print()
+def test_edit_distance():
+    t1 = b'this is a test'
+    t2 = b'wokka wokka!!!'
+    t_distance = edit_distance(t1,t2)
+    return t_distance == 37
 
-edit_distance(t1,t2)
-
+# ----------------------------------------------------------------------------------
 # For each KEYSIZE, take the first KEYSIZE worth of bytes, and the second KEYSIZE
 # worth of bytes, and find the edit distance between them. Normalize this result by dividing by KEYSIZE.
-
-import os
-import itertools
-rand = os.urandom(100)
-
-def chunks(l, n):
-    """Yield successive n-sized chunks from l."""
-    for i in range(0, len(l), n):
-        yield l[i:i + n]
-
-def key_distance(KEYSIZE, s):
-    chunk_keysize = list(chunks(s, KEYSIZE))[:4]
-    norm = [edit_distance(a,b) for a,b in itertools.combinations(chunk_keysize, 2)]
-    return np.mean(norm)/KEYSIZE
-
-    # norm = [
-    #
-    # return edit_distance(first, second)/KEYSIZE
-
-print(key_distance(5, rand))
-
+#
 # The KEYSIZE with the smallest normalized edit distance is probably the key.
 # You could proceed perhaps with the smallest 2-3 KEYSIZE values. Or take 4 KEYSIZE blocks
 # instead of 2 and average the distances.
 
+# Yield successive n-sized chunks from text
+def chunks(text, n):
+    for i in range(0, len(text), n):
+        yield text[i:i + n]
 
-def top_3_keysize(text):
+# Calculate edit distance for KEYSIZE
+def key_distance(KEYSIZE, s):
+    # get first 4 KEYSIZE blocks
+    chunk_keysize = list(chunks(s, KEYSIZE))[:4]
+    # calculte edit distance between each pair
+    norm = [edit_distance(a,b) for a,b in itertools.combinations(chunk_keysize, 2)]
+    return np.mean(norm)/KEYSIZE # average and normalized
+
+# Return 10 "smallest" KEYSIZE values
+def top_10_keysize(text):
     distances = [key_distance(i, text) for i in range(2,41)]
     return [n + 2 for n in np.argsort(distances)[:10]]
 
-top_3_keysize(rand)
-# top_3_keysize(content)
+def test_key_size():
+    rand = os.urandom(100)
+    dist = key_distance(5, rand)
+    return top_10_keysize(rand)
 
-import set1_ch1
-
-filename = "set1_ch6_file.txt"
-with open(filename, "rb") as file:
-    content = codecs.decode(file.read(), 'base64')
-    keys = top_3_keysize(content)
-    print(keys)
-
+# ----------------------------------------------------------------------------------
 # Now that you probably know the KEYSIZE: break the ciphertext into blocks of KEYSIZE length.
-
-def chunks(l, n):
-    """Yield successive n-sized chunks from l."""
-    for i in range(0, len(l), n):
-        yield l[i:i + n]
-
-chunked = list(chunks(content, keys[3]))[:-1]
-chunked
 # Now transpose the blocks: make a block that is the first byte of every block, and a block
 # that is the second byte of every block, and so on.
-
-t_chunked = [bytes(z) for z in zip(*chunked)]
-len(t_chunked)
-print(t_chunked[0])
-
+#
 # Solve each block as if it was single-character XOR. You already have code to do this.
-import set1_ch3
-
-final_key = []
-for b in t_chunked:
-    encode = codecs.encode(b, 'hex')
-    final_key.append(set1_ch3.single_byte_xor_cipher_score(encode)[1])
-
-final_key
-
+#
 # For each block, the single-byte XOR key that produces the best looking histogram is
 # the repeating-key XOR key byte for that block. Put them together and you have the key.
-
-import set1_ch5
-
-result = set1_ch5.fixed_xor(final_key, content)
-print(result)
-print(codecs.decode(result, 'hex'))
-
-### EVERYTHING
-
-poss_pt = []
-for k in keys:
-    chunked = list(chunks(content, k))[:-1]
-    t_chunked = [bytes(z) for z in zip(*chunked)]
-
-    final_key = []
-    for b in t_chunked:
-        encode = codecs.encode(b, 'hex')
-        final_key.append(set1_ch3.single_byte_xor_cipher_score(encode)[1])
-
-    result = set1_ch5.fixed_xor(final_key, content)
-    poss_pt.append(codecs.decode(result, 'hex'))
-print(poss_pt)
-print(max(poss_pt, key = lambda x: set1_ch3.scoring(str(x))))
-
+#
 # This code is going to turn out to be surprisingly useful later on. Breaking repeating-key
 # XOR ("Vigenere") statistically is obviously an academic exercise, a "Crypto 101" thing.
 # But more people "know how" to break it than can actually break it, and a similar technique
 # breaks something much more important.
+
+# Decrypt ciphertext given predicted keysize
+def decrypt_with_keysize(content, k):
+    chunked = list(chunks(content, k))[:-1]
+    t_chunked = [bytes(z) for z in zip(*chunked)]
+
+    block_key = []
+    # get single-byte XOR key that produces best histogram for each block
+    for b in t_chunked:
+        encode = codecs.encode(b, 'hex')
+        block_key.append(set1_ch3.single_byte_xor_cipher_info(encode)[1])
+    # decrypt using key and repeating xor
+    result = set1_ch5.repeat_xor(block_key, content)
+    return codecs.decode(result, 'hex')
+
+# Decrypt repeated-key xor ciphertext
+def decrypt_repeat_xor(filename):
+    with open(filename, "rb") as file:
+        content = codecs.decode(file.read(), 'base64')
+
+    keysizes = top_10_keysize(content)
+    poss_res = [] # possible decryptions
+    for k in keysizes:
+        result = decrypt_with_keysize(content, k)
+        poss_res.append(result)
+    # best decryption according to English plaintext scoring function
+    return max(poss_res, key = lambda x: set1_ch3.scoring(str(x)))
+
+def main():
+    test_edit_distance()
+    test_key_size()
+    decrypted = decrypt_repeat_xor("set1_ch6_file.txt")
+    print(decrypted)
+
+if __name__ == "__main__":
+    main()

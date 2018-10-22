@@ -16,10 +16,18 @@ import codecs
 def fixed_xor(first, second):
     decode1 = codecs.decode(first, 'hex')
     decode2 = codecs.decode(second, 'hex')
-    xor = bytes(a^b for a,b in zip(decode1,decode2))
-    return codecs.encode(xor, 'hex')
+    res = xor(decode1, decode2)
+    return codecs.encode(res, 'hex')
 
-input1 = b'1c0111001f010100061a024b53535009181c'
-input2 = b'686974207468652062756c6c277320657965'
+def xor(first, second):
+    xor = bytes(a^b for a,b in zip(first,second))
+    return xor
 
-fixed_xor(input1, input2)
+def main():
+    input1 = b'1c0111001f010100061a024b53535009181c'
+    input2 = b'686974207468652062756c6c277320657965'
+    xored = fixed_xor(input1, input2)
+    print(xored)
+
+if __name__ == "__main__":
+    main()

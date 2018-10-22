@@ -8,25 +8,26 @@
 #
 # Easiest way: use OpenSSL::Cipher and give it AES-128-ECB as the cipher.
 
-from Crypto.Cipher import AES
-import codecs
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.ciphers import (
+    Cipher, algorithms, modes
+)
 
-key = 'YELLOW SUBMARINE'
+def decrypt(key, ciphertext):
+    decryptor = Cipher(
+        algorithms.AES(key), #AES
+        modes.ECB(), #ECB mode
+        backend=default_backend()
+    ).decryptor()
+    return decryptor.update(ciphertext)
 
-# cipher = AES.new(key, AES.MODE_ECB)
+def main():
+    key = b'YELLOW SUBMARINE'
+    filename = "set1_ch7_encrypted.txt"
+    with open(filename, "rb") as file:
+        content = codecs.decode(file.read(), 'base64')
+        decrypted = decrypt(key, content)
+    print(decrypted)
 
-filename = "set1_ch7_encrypted.txt"
-with open(filename, "rb") as file:
-    content = codecs.decode(file.read(), 'base64')
-    # content = file.read()
-
-# msg =cipher.encrypt(content)
-# print (type(msg))
-#
-# print(codecs.encode(msg, 'hex'))
-
-def decipher(ciphertext):
-    decipher = AES.new(key, AES.MODE_ECB)
-    return decipher.decrypt(ciphertext)
-
-print(decipher(content))
+if __name__ == "__main__":
+    main()
