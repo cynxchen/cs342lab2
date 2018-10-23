@@ -29,6 +29,9 @@ def byte_to_bin(byte_str):
 def edit_distance(str1, str2):
     bin1 = byte_to_bin(str1)
     bin2 = byte_to_bin(str2)
+    maxlen = max(len(bin1), len(bin2))
+    bin1 = bin1.zfill(maxlen)
+    bin2 = bin2.zfill(maxlen)
     diff = [s1 != s2 for s1,s2 in zip(bin1, bin2)]
     return sum(diff)
 
@@ -60,9 +63,9 @@ def key_distance(KEYSIZE, s):
     return np.mean(norm)/KEYSIZE # average and normalized
 
 # Return 10 "smallest" KEYSIZE values
-def top_10_keysize(text):
+def top_keysize(text):
     distances = [key_distance(i, text) for i in range(2,41)]
-    return [n + 2 for n in np.argsort(distances)[:10]]
+    return np.argsort(distances)[0] + 2
 
 def test_key_size():
     rand = os.urandom(100)
@@ -103,13 +106,9 @@ def decrypt_repeat_xor(filename):
     with open(filename, "rb") as file:
         content = codecs.decode(file.read(), 'base64')
 
-    keysizes = top_10_keysize(content)
-    poss_res = [] # possible decryptions
-    for k in keysizes:
-        result = decrypt_with_keysize(content, k)
-        poss_res.append(result)
-    # best decryption according to English plaintext scoring function
-    return max(poss_res, key = lambda x: set1_ch3.scoring(str(x)))
+    keysize = top_keysize(content)
+    result = decrypt_with_keysize(content, keysize)
+    return result
 
 def main():
     test_edit_distance()

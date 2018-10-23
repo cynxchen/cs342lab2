@@ -12,7 +12,7 @@
 
 import codecs
 
-def hex_to_base64(hex):
+def hex_to_base64(hex): # hex - encoding of some bytes, memory configuration, to encode byte (use 2 ascii chars)
     decode = codecs.decode(hex, 'hex')
     encode = codecs.encode(decode, 'base64')
     return encode
