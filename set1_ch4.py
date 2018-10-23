@@ -11,8 +11,7 @@ def detect_single_xor(filename):
     best = []
     with open(filename, "rb") as file:
         for line in file:
-            if line.endswith(b'\n'):
-                line = line[:-1]
+            line = line.strip()
             # Append best decrypted message for each line
             best.append(set1_ch3.single_byte_xor_cipher_info(line))
     # Return best of the best decrypted messages

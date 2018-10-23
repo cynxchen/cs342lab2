@@ -31,7 +31,15 @@ def single_xor_score(cipher, key):
 
 # Scoring function of English plaintext. English sentences should have more spaces
 def scoring(s):
-    return s.count(" ")/len(s)
+    s = s.upper()
+    common = "ETAOINSHRDLU"
+    count = 0
+    for ch in s:
+        if ch == " ":
+            count += 20
+        elif ch in common:
+            count ++ 1
+    return count
 
 def main():
     cipher = b'1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736'

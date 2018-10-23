@@ -23,12 +23,12 @@ import set1_ch5
 
 # Convert bytes to binary
 def byte_to_bin(byte_str):
-    return bin(int.from_bytes(byte_str, byteorder="big"))
+    return bin(int.from_bytes(byte_str, byteorder="big"))[2:]
 
 # Calculate hamming/edit distance
 def edit_distance(str1, str2):
-    bin1 = byte_to_bin(str1)[2:]
-    bin2 = byte_to_bin(str2)[2:]
+    bin1 = byte_to_bin(str1)
+    bin2 = byte_to_bin(str2)
     diff = [s1 != s2 for s1,s2 in zip(bin1, bin2)]
     return sum(diff)
 
