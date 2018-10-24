@@ -15,5 +15,9 @@
 #
 # "YELLOW SUBMARINE\x04\x04\x04\x04"
 
-def padding(message):
-    length =
+def padding(message, block_len):
+    pad_len = block_len - (len(message) % block_len)
+    append = bytearray([pad_len] * pad_len)
+    return message + bytes(append)
+
+padding(b"YELLOW SUBMARINE", 20)

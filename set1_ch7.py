@@ -8,6 +8,7 @@
 #
 # Easiest way: use OpenSSL::Cipher and give it AES-128-ECB as the cipher.
 
+import codecs
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.ciphers import (
     Cipher, algorithms, modes
@@ -19,7 +20,15 @@ def decrypt(key, ciphertext):
         modes.ECB(), #ECB mode
         backend=default_backend()
     ).decryptor()
-    return decryptor.update(ciphertext)
+    return decryptor.update(ciphertext) + decryptor.finalize()
+
+def encrypt(key, plaintext):
+    encryptor = Cipher(
+        algorithms.AES(key), #AES
+        modes.ECB(), #ECB mode
+        backend=default_backend()
+    ).encryptor()
+    return encryptor.update(plaintext) + encryptor.finalize()
 
 def main():
     key = b'YELLOW SUBMARINE'
@@ -28,6 +37,9 @@ def main():
         content = codecs.decode(file.read(), 'base64')
         decrypted = decrypt(key, content)
     print(decrypted)
+    encrypted = encrypt(key, decrypted)
+    print(encrypted)
+    print(encrypted == content)
 
 if __name__ == "__main__":
     main()

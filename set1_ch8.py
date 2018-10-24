@@ -12,7 +12,7 @@ import set1_ch6
 from collections import Counter
 import numpy as np
 
-def detect_AES(filename):
+def detect_ECB(filename):
     unique = []
     content = []
     with open(filename, "rb") as file:
@@ -24,7 +24,7 @@ def detect_AES(filename):
     return AES_encrypted, content[AES_encrypted]
 
 def main():
-    index, ciphertext = detect_AES("set1_ch8_data.txt")
+    index, ciphertext = detect_ECB("set1_ch8_data.txt")
     print(index, ciphertext)
 
 if __name__ == "__main__":
