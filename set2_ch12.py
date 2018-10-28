@@ -23,6 +23,7 @@
 import set2_ch11
 import set2_ch9
 import set1_ch7
+import set1_ch6
 import codecs
 
 key = b'\xfdp \x14\x8a\x80W\xc2\xe6\xfec\x99\x9d^\xf4\x82'
@@ -95,3 +96,30 @@ for i in range(128):
 unknown += output_dict[byte_ecb_encrypt(pre)[:16]]
 
 # 6. Repeat for the next byte.
+
+block_size = detect_block_size()
+
+def prepend(unknown):
+    unknown_len = len(unknown)
+    pad_len = block_size - (unknown_len % block_size) - 1
+    pre = b'A' * pad_len
+    return pre, (unknown_len + pad_len) // block_size
+
+prepend(b'a' * 15)
+
+def byte_ecb_decrypt():
+    full = unpad(byte_ecb_encrypt(b''))
+    output_dict = {}
+    unknown = b''
+    while unknown == b'' or unknown[-1] != 1:
+        pre, block_num = prepend(unknown)
+        for i in range(128):
+            single_chr = bytes(chr(i), 'ascii')
+            pt = pre + unknown + single_chr
+            ct = list(set1_ch6.chunks(byte_ecb_encrypt(pt), block_size))[block_num]
+            output_dict[ct] = single_chr
+        single_block = list(set1_ch6.chunks(byte_ecb_encrypt(pre), block_size))
+        unknown += output_dict[single_block[block_num]]
+    return unknown[:-1]
+
+byte_ecb_decrypt()
