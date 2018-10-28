@@ -25,6 +25,8 @@ from random import randint
 import set1_ch7
 import set2_ch9
 import set2_ch10
+import set1_ch6
+from collections import Counter
 
 def random_16_bytes():
     return os.urandom(16)
@@ -35,19 +37,22 @@ def random_append():
 
 def encryption_oracle(message):
     key = random_16_bytes()
-    print(message, len(message))
     message = random_append() + message + random_append()
-    print(message, len(message))
-    message = set2_ch9.padding(message, 16)
-    print(message, len(message))
     if randint(0,1):
+        message = set2_ch9.padding(message, 16)
         return set1_ch7.encrypt(key, message)
     else:
         iv = random_16_bytes()
         return set2_ch10.cbc_encrypt(key, message, iv)
 
-message = b"I'm back and I'm ringin' the bell"
-encryption_oracle(message )
-
 def detect_cipher(ciphertext):
-    
+    blocks = list(set1_ch6.chunks(ciphertext, 16))
+    print(blocks)
+    return "CBC" if len(set(blocks)) == len(blocks) else "EBC"
+
+
+message = b'a' * 64
+ciphertext = encryption_oracle(message)
+detect_cipher(ciphertext)
+
+Counter([detect_cipher(encryption_oracle(message)) for i in range(100)])

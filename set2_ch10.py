@@ -19,6 +19,7 @@ import set1_ch6
 import codecs
 import set1_ch2
 import set1_ch7
+import set2_ch9
 
 def cbc_decrypt(key, ciphertext, iv):
     blocks = list(set1_ch6.chunks(ciphertext, 16))
@@ -30,9 +31,15 @@ def cbc_decrypt(key, ciphertext, iv):
         plaintext.append(set1_ch2.xor(decrypted, prev_block))
         prev_block = b
 
-    return b"".join(plaintext)
+    joined = b"".join(plaintext)
+
+    last_byte = joined[-1]
+    if last_byte < len(joined) and (joined[-last_byte:] == bytes(bytearray([last_byte] * last_byte))):
+        joined = joined[:-last_byte]
+    return joined
 
 def cbc_encrypt(key, plaintext, iv):
+    plaintext = set2_ch9.padding(plaintext, 16)
     blocks = list(set1_ch6.chunks(plaintext, 16))
     prev_encrypt = iv
     ciphertext = []
