@@ -21,6 +21,12 @@ import set1_ch2
 import set1_ch7
 import set2_ch9
 
+def unpad(text):
+    last_byte = text[-1]
+    if last_byte < len(text) and (text[-last_byte:] == bytes(bytearray([last_byte] * last_byte))):
+        text = text[:-last_byte]
+    return text
+
 def cbc_decrypt(key, ciphertext, iv):
     blocks = list(set1_ch6.chunks(ciphertext, 16))
     prev_block = iv
@@ -33,10 +39,7 @@ def cbc_decrypt(key, ciphertext, iv):
 
     joined = b"".join(plaintext)
 
-    last_byte = joined[-1]
-    if last_byte < len(joined) and (joined[-last_byte:] == bytes(bytearray([last_byte] * last_byte))):
-        joined = joined[:-last_byte]
-    return joined
+    return unpad(joined)
 
 def cbc_encrypt(key, plaintext, iv):
     plaintext = set2_ch9.padding(plaintext, 16)
