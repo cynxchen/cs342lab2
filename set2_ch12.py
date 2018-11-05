@@ -21,6 +21,7 @@
 # AES-128-ECB(your-string || unknown-string, random-key)
 
 import set2_ch11
+import set2_ch10
 import set2_ch9
 import set1_ch7
 import set1_ch6
@@ -28,7 +29,7 @@ import codecs
 
 key = b'\xfdp \x14\x8a\x80W\xc2\xe6\xfec\x99\x9d^\xf4\x82'
 
-def byte_ecb_encrypt(message):
+def byte_ecb_encrypt(message, key):
     unknown_string = b'Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkgaGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBqdXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUgYnkK'
     message += codecs.decode(unknown_string, 'base64')
     message = set2_ch9.padding(message, 16)
@@ -37,7 +38,7 @@ def byte_ecb_encrypt(message):
 unknown_string = b'Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkgaGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBqdXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUgYnkK'
 codecs.decode(unknown_string, 'base64')
 
-cipher = byte_ecb_decrypt(b'hi')
+cipher = byte_ecb_encrypt(b'hi', key)
 
 # It turns out: you can decrypt "unknown-string" with repeated calls to the oracle function!
 #
@@ -49,8 +50,8 @@ cipher = byte_ecb_decrypt(b'hi')
 
 def detect_block_size():
     block_size = 1
-    while(byte_ecb_encrypt(b'A' * block_size * 2)[:block_size] !=
-          byte_ecb_encrypt(b'A' * block_size * 2)[block_size:block_size*2]):
+    while(byte_ecb_encrypt(b'A' * block_size * 2, key)[:block_size] !=
+          byte_ecb_encrypt(b'A' * block_size * 2, key)[block_size:block_size*2]):
         block_size += 1
     return block_size
 
@@ -58,7 +59,7 @@ print(detect_block_size())
 
 # 2. Detect that the function is using ECB. You already know, but do this step anyways.
 
-test_pt = byte_ecb_encrypt(b'A' * 32)
+test_pt = byte_ecb_encrypt(b'A' * 32, key)
 set2_ch11.detect_cipher(test_pt)
 
 # 3. Knowing the block size, craft an input block that is exactly 1 byte short (for
@@ -74,7 +75,7 @@ output_dict = {}
 for i in range(128):
     single_chr = bytes(chr(i), 'ascii')
     pt = pre + single_chr
-    ct = byte_ecb_encrypt(pt)[:16]
+    ct = byte_ecb_encrypt(pt, key)[:16]
     output_dict[ct] = single_chr
 
 output_dict
@@ -83,17 +84,17 @@ output_dict
 # You've now discovered the first byte of unknown-string.
 
 unknown = b''
-unknown += output_dict[byte_ecb_encrypt(pre)[:16]]
+unknown += output_dict[byte_ecb_encrypt(pre, key)[:16]]
 unknown
 pre = pre[:-1]
 
 for i in range(128):
     single_chr = bytes(chr(i), 'ascii')
     pt = pre + unknown + single_chr
-    ct = byte_ecb_encrypt(pt)[:16]
+    ct = byte_ecb_encrypt(pt, key)[:16]
     output_dict[ct] = single_chr
 
-unknown += output_dict[byte_ecb_encrypt(pre)[:16]]
+unknown += output_dict[byte_ecb_encrypt(pre, key)[:16]]
 
 # 6. Repeat for the next byte.
 
@@ -108,7 +109,6 @@ def prepend(unknown):
 prepend(b'a' * 15)
 
 def byte_ecb_decrypt():
-    full = unpad(byte_ecb_encrypt(b''))
     output_dict = {}
     unknown = b''
     while unknown == b'' or unknown[-1] != 1:
@@ -116,9 +116,9 @@ def byte_ecb_decrypt():
         for i in range(128):
             single_chr = bytes(chr(i), 'ascii')
             pt = pre + unknown + single_chr
-            ct = list(set1_ch6.chunks(byte_ecb_encrypt(pt), block_size))[block_num]
+            ct = list(set1_ch6.chunks(byte_ecb_encrypt(pt, key), block_size))[block_num]
             output_dict[ct] = single_chr
-        single_block = list(set1_ch6.chunks(byte_ecb_encrypt(pre), block_size))
+        single_block = list(set1_ch6.chunks(byte_ecb_encrypt(pre, key), block_size))
         unknown += output_dict[single_block[block_num]]
     return unknown[:-1]
 
