@@ -41,6 +41,20 @@ def cbc_decrypt(key, ciphertext, iv):
 
     return unpad(joined)
 
+def cbc_decrypt_wo_unpad(key, ciphertext, iv):
+    blocks = list(set1_ch6.chunks(ciphertext, 16))
+    prev_block = iv
+    plaintext = []
+
+    for b in blocks:
+        decrypted = set1_ch7.decrypt(key, b)
+        plaintext.append(set1_ch2.xor(decrypted, prev_block))
+        prev_block = b
+
+    joined = b"".join(plaintext)
+
+    return joined
+
 def cbc_encrypt(key, plaintext, iv):
     plaintext = set2_ch9.padding(plaintext, 16)
     blocks = list(set1_ch6.chunks(plaintext, 16))
