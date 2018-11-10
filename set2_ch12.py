@@ -35,11 +35,6 @@ def byte_ecb_encrypt(message, key):
     message = set2_ch9.padding(message, 16)
     return set1_ch7.encrypt(key, message)
 
-unknown_string = b'Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkgaGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBqdXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUgYnkK'
-codecs.decode(unknown_string, 'base64')
-
-cipher = byte_ecb_encrypt(b'hi', key)
-
 # It turns out: you can decrypt "unknown-string" with repeated calls to the oracle function!
 #
 # Here's roughly how:
@@ -55,12 +50,12 @@ def detect_block_size():
         block_size += 1
     return block_size
 
-print(detect_block_size())
+block_size = detect_block_size()
 
 # 2. Detect that the function is using ECB. You already know, but do this step anyways.
 
 test_pt = byte_ecb_encrypt(b'A' * 32, key)
-set2_ch11.detect_cipher(test_pt)
+detected_cipher = set2_ch11.detect_cipher(test_pt)
 
 # 3. Knowing the block size, craft an input block that is exactly 1 byte short (for
 # instance, if the block size is 8 bytes, make "AAAAAAA"). Think about what the
@@ -69,36 +64,10 @@ set2_ch11.detect_cipher(test_pt)
 # 4. Make a dictionary of every possible last byte by feeding different strings to the oracle;
 # for instance, "AAAAAAAA", "AAAAAAAB", "AAAAAAAC", remembering the first block of each invocation.
 
-pre = b'A' * 15
-output_dict = {}
-
-for i in range(128):
-    single_chr = bytes(chr(i), 'ascii')
-    pt = pre + single_chr
-    ct = byte_ecb_encrypt(pt, key)[:16]
-    output_dict[ct] = single_chr
-
-output_dict
-
 # 5. Match the output of the one-byte-short input to one of the entries in your dictionary.
 # You've now discovered the first byte of unknown-string.
 
-unknown = b''
-unknown += output_dict[byte_ecb_encrypt(pre, key)[:16]]
-unknown
-pre = pre[:-1]
-
-for i in range(128):
-    single_chr = bytes(chr(i), 'ascii')
-    pt = pre + unknown + single_chr
-    ct = byte_ecb_encrypt(pt, key)[:16]
-    output_dict[ct] = single_chr
-
-unknown += output_dict[byte_ecb_encrypt(pre, key)[:16]]
-
 # 6. Repeat for the next byte.
-
-block_size = detect_block_size()
 
 def prepend(unknown):
     unknown_len = len(unknown)
@@ -106,20 +75,24 @@ def prepend(unknown):
     pre = b'A' * pad_len
     return pre, (unknown_len + pad_len) // block_size
 
-prepend(b'a' * 15)
-
 def byte_ecb_decrypt():
-    output_dict = {}
-    unknown = b''
+    output_dict = {} # dictionary holding blocks with shortened byte and character
+    unknown = b'' # uncovered secret string
+
     while unknown == b'' or unknown[-1] != 1:
         pre, block_num = prepend(unknown)
-        for i in range(128):
+        for i in range(128): # every possible ascii character
             single_chr = bytes(chr(i), 'ascii')
             pt = pre + unknown + single_chr
             ct = list(set1_ch6.chunks(byte_ecb_encrypt(pt, key), block_size))[block_num]
-            output_dict[ct] = single_chr
+            output_dict[ct] = single_chr # find matching chunk
         single_block = list(set1_ch6.chunks(byte_ecb_encrypt(pre, key), block_size))
         unknown += output_dict[single_block[block_num]]
+
     return unknown[:-1]
 
-byte_ecb_decrypt()
+def main():
+    print(byte_ecb_decrypt())
+
+if __name__ == "__main__":
+    main()

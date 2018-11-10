@@ -25,8 +25,6 @@ def parse_cookie(cookie):
         obj[key_val[0]] = key_val[1]
     return obj
 
-print(parse_cookie(b'foo=bar&baz=qux&zap=zazzle'))
-
 # Now write a function that encodes a user profile in that format,
 # given an email address. You should have something like:
 #
@@ -49,9 +47,6 @@ def profile_for(email):
     clean_email = email.replace(b'&', b'').replace(b'=', b'')
     return b'email=' + clean_email + b'&uid=' + b'10' + b'&role=user'
 
-profile = profile_for(b"foo@bar.com")
-profile
-
 # Now, two more easy functions. Generate a random AES key, then:
 key = set2_ch11.random_16_bytes()
 
@@ -61,31 +56,39 @@ def encrypt_profile(key, profile):
     encrypted = set1_ch7.encrypt(key, prof_padded)
     return encrypted
 
-encrypted = encrypt_profile(key, profile)
-print(encrypted)
-
 # Decrypt the encoded user profile and parse it.
 def decrypt_profile(key, cipher_prof):
     plain_prof = set1_ch7.decrypt(key, cipher_prof)
     plain_prof = set2_ch10.unpad(plain_prof)
     return plain_prof
 
-decrypted = decrypt_profile(key, encrypted)
-print(decrypted)
-print(decrypted == profile)
-
 # Using only the user input to profile_for() (as an oracle to generate "valid"
 # ciphertexts) and the ciphertexts themselves, make a role=admin profile.
-email1 = b'foo@bar.commm'
-email2 = b'c' * 10 + b'admin' + b'\x0b' * 11
+def create_admin():
+    email1 = b'foo@bar.commm'
+    email2 = b'c' * 10 + b'admin' + b'\x0b' * 11
 
-prof1 = profile_for(email1)
-prof2 = profile_for(email2)
+    prof1 = profile_for(email1)
+    prof2 = profile_for(email2)
 
-encrypted1 = encrypt_profile(key, prof1)
-encrypted2 = encrypt_profile(key, prof2)
+    encrypted1 = encrypt_profile(key, prof1)
+    encrypted2 = encrypt_profile(key, prof2)
 
-encrypted_admin = encrypted1[:32] + encrypted2[16:32]
-decrypted_admin = decrypt_profile(key, encrypted_admin)
+    encrypted_admin = encrypted1[:32] + encrypted2[16:32] # concatenate cleverly
+    decrypted_admin = decrypt_profile(key, encrypted_admin)
 
-decrypted_admin
+    return parse_cookie(decrypted_admin)
+
+def main():
+    print(parse_cookie(b'foo=bar&baz=qux&zap=zazzle'))
+    profile = profile_for(b"foo@bar.com")
+    print(profile)
+    encrypted = encrypt_profile(key, profile)
+    print(encrypted)
+    decrypted = decrypt_profile(key, encrypted)
+    print(decrypted)
+    print(decrypted == profile)
+    print(create_admin())
+
+if __name__ == "__main__":
+    main()

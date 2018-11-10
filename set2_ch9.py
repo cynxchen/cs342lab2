@@ -20,4 +20,8 @@ def padding(message, block_len):
     append = bytearray([pad_len] * pad_len)
     return message + bytes(append)
 
-padding(b"YELLOW SUBMARINE", 20)
+def main():
+    print(padding(b"YELLOW SUBMARINE", 20))
+
+if __name__ == "__main__":
+    main()

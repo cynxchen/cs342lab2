@@ -38,21 +38,25 @@ def random_append():
 def encryption_oracle(message):
     key = random_16_bytes()
     message = random_append() + message + random_append()
+    # random choose either cbc or ebc
     if randint(0,1):
         message = set2_ch9.padding(message, 16)
-        return set1_ch7.encrypt(key, message)
+        return set1_ch7.encrypt(key, message) #ebc
     else:
         iv = random_16_bytes()
-        return set2_ch10.cbc_encrypt(key, message, iv)
+        return set2_ch10.cbc_encrypt(key, message, iv) # cbc
 
 def detect_cipher(ciphertext):
     blocks = list(set1_ch6.chunks(ciphertext, 16))
-    print(blocks)
     return "CBC" if len(set(blocks)) == len(blocks) else "EBC"
 
+def main():
+    message = b'a' * 64
+    ciphertext = encryption_oracle(message)
+    print(detect_cipher(ciphertext))
 
-message = b'a' * 64
-ciphertext = encryption_oracle(message)
-detect_cipher(ciphertext)
+    # use oracle 100 times
+    print(Counter([detect_cipher(encryption_oracle(message)) for i in range(100)]))
 
-Counter([detect_cipher(encryption_oracle(message)) for i in range(100)])
+if __name__ == "__main__":
+    main()

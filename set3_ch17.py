@@ -39,33 +39,23 @@ b'MDAwMDA3SSdtIG9uIGEgcm9sbCwgaXQncyB0aW1lIHRvIGdvIHNvbG8=',
 b'MDAwMDA4b2xsaW4nIGluIG15IGZpdmUgcG9pbnQgb2g=',
 b'MDAwMDA5aXRoIG15IHJhZy10b3AgZG93biBzbyBteSBoYWlyIGNhbiBibG93']
 
-for r in random_input:
-    print(codecs.decode(r, 'base64'))
-
 def cbc_encrypt_padding():
-    input_ind = random.randint(0,9)
+    input_ind = random.randint(0,9) # pick random input
     input = random_input[input_ind]
-    print(input)
     return set2_ch10.cbc_encrypt(key, input, iv), iv
-
-rand_cipher, iv = cbc_encrypt_padding()
-blocks = [iv] + list(set1_ch6.chunks(rand_cipher, 16))
-len(blocks)
 
 # The second function should consume the ciphertext produced by the first function,
 # decrypt it, check its padding, and return true or false depending on whether the
 # padding is valid.
 
-def cbc_decrypt_padding(ciphertext):
+def padding_oracle(ciphertext):
     decrypt = set2_ch10.cbc_decrypt_wo_unpad(key, ciphertext, iv)
-    # print(decrypt)
+    # check valid padding
     try:
         set2_ch15.valid_padding(decrypt)
         return True
     except:
         return False
-
-print(cbc_decrypt_padding(rand_cipher))
 
 # What you're doing here.
 # This pair of functions approximates AES-CBC encryption as its deployed serverside
@@ -75,29 +65,38 @@ print(cbc_decrypt_padding(rand_cipher))
 # It turns out that it's possible to decrypt the ciphertexts provided by the first
 # function.
 
-
-def exploit_cbc_oracle(blocks):
-    message = b''
+def exploit_cbc_oracle(iv, ciphertext):
+    blocks = [iv] + list(set1_ch6.chunks(ciphertext, 16))
+    message = b'' # decrypted message we are uncovering
+    # decrypt by block
     for b_num in range(len(blocks)-1):
-        guessed = bytearray([0] * 16)
+        guessed = bytearray([0] * 16) # guessed characters
+        # start from end of block
         for b in range(15, -1, -1):
             padding = bytearray([0] * 16)
             padding[b:16] = [16-b] * (16-b)
+            # xor prev block, padding block, and guessed block
             modified = set1_ch2.xor(set1_ch2.xor(blocks[b_num], padding), guessed)
+            # try every possible character until padding is valid
             for i in range(256):
                 r = bytearray([0] * 16)
                 r[b] = i
                 xored = set1_ch2.xor(modified,r)
-                if cbc_decrypt_padding(xored + blocks[b_num+1]):
-                    if not (16-b == 1 and i == 1):
+                if padding_oracle(xored + blocks[b_num+1]):
+                    if not (16-b == 1 and i == 1): # check special case of actual padding
                         guessed[b] = i
         message += codecs.decode(guessed, 'base64')
-        print(guessed)
-    print(message)
+    return message
 
-rand_cipher, iv = cbc_encrypt_padding()
-exploit_cbc_oracle([iv] + list(set1_ch6.chunks(rand_cipher, 16)))
-print('hi')
+def main():
+    for i in range(10):
+        rand_cipher, iv = cbc_encrypt_padding()
+        print(exploit_cbc_oracle(iv, rand_cipher))
+
+if __name__ == "__main__":
+    main()
+
+
 # The decryption here depends on a side-channel leak by the decryption function.
 # The leak is the error message that the padding is valid or not.
 #

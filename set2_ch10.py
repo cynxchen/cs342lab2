@@ -68,13 +68,17 @@ def cbc_encrypt(key, plaintext, iv):
 
     return b"".join(ciphertext)
 
-filename = 'set2_ch10_cipher.txt'
-with open(filename, "rb") as file:
-    ciphertext = codecs.decode(file.read(), 'base64')
-key = b"YELLOW SUBMARINE"
-iv = b"\x00" * 16
-plaintext = cbc_decrypt(key, ciphertext, iv)
-ciphertext2 = cbc_encrypt(key, plaintext, iv)
+def main():
+    filename = 'set2_ch10_cipher.txt'
+    with open(filename, "rb") as file:
+        ciphertext = codecs.decode(file.read(), 'base64')
+    key = b"YELLOW SUBMARINE"
+    iv = b"\x00" * 16
+    plaintext = cbc_decrypt(key, ciphertext, iv)
+    ciphertext2 = cbc_encrypt(key, plaintext, iv)
 
-print(plaintext)
-print(ciphertext == ciphertext2)
+    print(plaintext)
+    print(ciphertext == ciphertext2)
+
+if __name__ == "__main__":
+    main()

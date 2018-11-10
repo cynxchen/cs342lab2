@@ -24,15 +24,18 @@ import set2_ch10
 def valid_padding(plaintext):
     unpad = set2_ch10.unpad(plaintext)
     padded = set2_ch9.padding(unpad, 16)
-    # print(unpad, padded)
     if plaintext == padded:
         return unpad
     else:
         raise ValueError('Bad padding')
 
-try:
-    print(valid_padding(b"ICE ICE BABY\x04\x04\x04\x04"))
-    print(valid_padding(b"ICE ICE BABY\x05\x05\x05\x05"))
-    print(valid_padding(b"ICE ICE BABY\x01\x02\x03\x04"))
-except:
-    print('bad padding')
+def main():
+    test = [b"ICE ICE BABY\x05\x05\x05\x05", b"ICE ICE BABY\x01\x02\x03\x04", b"ICE ICE BABY\x04\x04\x04\x04"]
+    for t in test:
+        try:
+            print(t, valid_padding(t))
+        except:
+            print(t, 'bad padding')
+
+if __name__ == "__main__":
+    main()
